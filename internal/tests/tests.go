@@ -12,8 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const clickHouseENVKey = "TEST_CLICK_HOUSE_URL"
+
 func mustConnectToClickHouse(t *testing.T) driver.Conn {
-	addr := os.Getenv("TEST_CLICK_HOUSE_URL")
+	addr := os.Getenv(clickHouseENVKey)
 	if addr == "" {
 		addr = "127.0.0.1:9000"
 	}

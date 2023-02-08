@@ -11,3 +11,21 @@ services:
       nofile:
         soft: 262144
         hard: 262144
+  db-migrations:
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile.migration
+    command: "-path=/migration/ -database clickhouse://clickhouse:9000 up"
+    depends_on:
+      - clickhouse
+  analytics-service:
+    build:
+      context: .
+    ports:
+      - "11000:11000"
+    environment:
+      CLICK_HOUSE_URL: "clickhouse:9000"
+      SERVICE_HOST: ":11000"
+    depends_on:
+      - db-migrations

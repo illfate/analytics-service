@@ -8,4 +8,5 @@ CREATE TABLE events
     event       String,
     param_int   Int64,
     param_str   String
-);
+) ENGINE = MergeTree()
+    ORDER BY client_time;

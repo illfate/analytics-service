@@ -21,7 +21,7 @@ import (
 	"github.com/illfate/analytics-service/internal/repository"
 )
 
-func TestIntegration(t *testing.T) {
+func TestCreateEvents(t *testing.T) {
 	events := []analytics.Event{
 		{
 			ClientTime: time.Now(),
