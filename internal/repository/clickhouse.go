@@ -16,7 +16,7 @@ func NewClickHouse(conn driver.Conn) *ClickHouse {
 	return &ClickHouse{conn: conn}
 }
 
-func (h *ClickHouse) Insert(ctx context.Context, events ...analytics.Event) error {
+func (h *ClickHouse) InsertEvents(ctx context.Context, events []analytics.Event) error {
 	batch, err := h.conn.PrepareBatch(ctx, `insert into events(
                    			client_time,
 							device_id,

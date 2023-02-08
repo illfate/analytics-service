@@ -21,6 +21,7 @@ require (
 	github.com/go-faster/errors v0.6.1 // indirect
 	github.com/go-ozzo/ozzo-routing v2.1.4+incompatible // indirect
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f // indirect
+	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/paulmach/orb v0.8.0 // indirect

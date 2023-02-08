@@ -6,7 +6,7 @@ import (
 )
 
 type Repository interface {
-	InsertEvents(ctx context.Context, events ...Event) error
+	InsertEvents(ctx context.Context, events []Event) error
 }
 
 type Service struct {
@@ -18,7 +18,7 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateEvents(ctx context.Context, events []Event) error {
-	err := s.repo.InsertEvents(ctx, events...)
+	err := s.repo.InsertEvents(ctx, events)
 	if err != nil {
 		return fmt.Errorf("failed to insert events: %w", err)
 	}
