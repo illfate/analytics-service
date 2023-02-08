@@ -40,7 +40,9 @@ func (s *Server) createEvents(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		s.logger.Error("Failed to create events", zap.Error(err))
 		s.renderErr(w, req, ErrRender(err))
+		return
 	}
+	render.Status(req, http.StatusOK)
 }
 
 func (s *Server) eventsFromReq(req *http.Request) ([]analytics.Event, error) {
@@ -52,6 +54,9 @@ func (s *Server) eventsFromReq(req *http.Request) ([]analytics.Event, error) {
 	jsonObjects := bytes.Split(body, []byte("\n"))
 	events := make([]analytics.Event, 0, len(jsonObjects))
 	for _, o := range jsonObjects {
+		if len(o) == 0 {
+			continue
+		}
 		var event analytics.Event
 		err = json.Unmarshal(o, &event)
 		if err != nil {
