@@ -1,0 +1,19 @@
+{
+   "iteration_count":5000,
+   "load_type":"linear",
+   "duration":5,
+   "steps":[
+      {
+         "id":1,
+         "url":"{{TARGET_URL}}",
+         "method":"POST",
+         "headers":{
+            "Content-Type":"application/json"
+         },
+         "payload_file":"ddosify/data.json"
+      }
+   ],
+   "env":{
+      "TARGET_URL":"http://localhost:11000/v1/events"
+   }
+}
