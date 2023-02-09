@@ -2,7 +2,7 @@ CREATE TABLE events
 (
     client_time DateTime,
     server_time DateTime,
-    ip          IPv4,
+    ip          String,
     device_id   String,
     device_os   String,
     session     String,
