@@ -19,6 +19,8 @@ func NewClickHouse(conn driver.Conn) *ClickHouse {
 func (h *ClickHouse) InsertEvents(ctx context.Context, events []analytics.Event) error {
 	batch, err := h.conn.PrepareBatch(ctx, `insert into events(
                    			client_time,
+                   			server_time,
+                   			ip,
 							device_id,
 							device_os,
 							session,
@@ -33,6 +35,8 @@ func (h *ClickHouse) InsertEvents(ctx context.Context, events []analytics.Event)
 	for _, event := range events {
 		err := batch.Append(
 			event.ClientTime,
+			event.ServerTime,
+			event.IP,
 			event.DeviceId,
 			event.DeviceOs,
 			event.Session,

@@ -11,4 +11,6 @@ type Event struct {
 	Event      string    `json:"event"`
 	ParamInt   int64     `json:"param_int"`
 	ParamStr   string    `json:"param_str"`
+	IP         string    `json:"-"`
+	ServerTime time.Time `json:"-"`
 }

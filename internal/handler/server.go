@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"go.uber.org/zap"
 
@@ -27,6 +30,7 @@ func NewServer(service *analytics.Service, logger *zap.Logger) *Server {
 		logger:  logger,
 	}
 	router.Post("/v1/events", s.createEvents)
+	router.Mount("/debug", middleware.Profiler())
 	return s
 }
 
@@ -46,6 +50,11 @@ func (s *Server) createEvents(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) eventsFromReq(req *http.Request) ([]analytics.Event, error) {
+	ip, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		return nil, err
+	}
+
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 
@@ -62,6 +71,8 @@ func (s *Server) eventsFromReq(req *http.Request) ([]analytics.Event, error) {
 		if err != nil {
 			return nil, err
 		}
+		event.IP = ip
+		event.ServerTime = time.Now()
 		events = append(events, event)
 	}
 	return events, nil
