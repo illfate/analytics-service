@@ -1,0 +1,17 @@
+version: '3'
+
+tasks:
+  stress-test:
+    cmds:
+      - ddosify -config ddosify/config.json
+  mock-gen:
+    cmds:
+      - mockgen -source internal/analytics/service.go -destination internal/mock/event.go -package mock
+  unit-tests:
+    cmds:
+      - go test -v -cover ./...
+  integration-tests:
+    cmds:
+      - docker-compose up -d clickhouse db-migrations
+      - go test -v -cover --tags="integration_tests" ./... # TODO: we should wait for clickhouse
+      - docker-compose down
