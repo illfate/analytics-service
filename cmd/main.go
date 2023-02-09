@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/illfate/analytics-service/internal/analytics"
 	"github.com/illfate/analytics-service/internal/handler"
@@ -49,10 +52,38 @@ func run() error {
 	}
 	server := handler.NewServer(service, logger)
 
-	// TODO: graceful shutdown
-	err = http.ListenAndServe(cfg.ServerAddr, server)
+	err = runServer(service, logger, cfg, server)
 	if err != nil {
-		return fmt.Errorf("failed to listen and serve: %w", err)
+		return err
+	}
+	return nil
+}
+
+func runServer(service *analytics.Service, logger *zap.Logger, cfg Config, server *handler.Server) error {
+	service.StartCreatingEvents(context.TODO(), func(err error) {
+		logger.Error("Failed to create event", zap.Error(err))
+	})
+	defer service.Close()
+
+	httpServer := &http.Server{Addr: cfg.ServerAddr, Handler: server}
+	exitCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	var group errgroup.Group
+	group.Go(func() error {
+		err := httpServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			return fmt.Errorf("failed to listen and serve: %w", err)
+		}
+		return nil
+	})
+	group.Go(func() error {
+		<-exitCtx.Done()
+		return httpServer.Shutdown(context.TODO())
+	})
+	err := group.Wait()
+	if err != nil {
+		return err
 	}
 	return nil
 }

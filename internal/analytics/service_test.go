@@ -27,8 +27,12 @@ func TestServiceCreateEvents(t *testing.T) {
 		repo.EXPECT().InsertEvents(gomock.Any(), []analytics.Event{event}).Return(nil)
 
 		service := analytics.NewService(repo)
+		service.StartCreatingEvents(context.TODO(), func(err error) {
+			require.NoError(t, err)
+		})
 		err := service.CreateEvents(context.Background(), []analytics.Event{event})
 		assert.NoError(t, err)
+		service.Close()
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -37,8 +41,12 @@ func TestServiceCreateEvents(t *testing.T) {
 		repo.EXPECT().InsertEvents(gomock.Any(), []analytics.Event{event}).Return(io.EOF)
 
 		service := analytics.NewService(repo)
+		service.StartCreatingEvents(context.TODO(), func(err error) {
+			require.NotNil(t, err)
+			assert.Equal(t, fmt.Errorf("failed to insert events: %w", io.EOF), err)
+		})
 		err := service.CreateEvents(context.Background(), []analytics.Event{event})
-		require.NotNil(t, err)
-		assert.Equal(t, fmt.Errorf("failed to insert events: %w", io.EOF), err)
+		require.NoError(t, err)
+		service.Close()
 	})
 }
