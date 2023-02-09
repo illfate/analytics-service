@@ -52,17 +52,15 @@ func run() error {
 	}
 	server := handler.NewServer(service, logger)
 
-	err = runServer(service, logger, cfg, server)
+	err = runServer(service, cfg, server)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func runServer(service *analytics.Service, logger *zap.Logger, cfg Config, server *handler.Server) error {
-	service.StartCreatingEvents(context.TODO(), func(err error) {
-		logger.Error("Failed to create event", zap.Error(err))
-	})
+func runServer(service *analytics.Service, cfg Config, server *handler.Server) error {
+	service.StartCreatingEvents(context.TODO())
 	defer service.Close()
 
 	httpServer := &http.Server{Addr: cfg.ServerAddr, Handler: server}

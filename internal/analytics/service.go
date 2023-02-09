@@ -24,18 +24,21 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateEvents(_ context.Context, events []Event) error {
-	return s.pipeLine.write(events)
+	errCh := s.pipeLine.write(events)
+	err := <-errCh
+	return err
 }
 
-func (s *Service) StartCreatingEvents(ctx context.Context, handleErr func(err error)) {
+func (s *Service) StartCreatingEvents(ctx context.Context) {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		s.pipeLine.read(func(events []Event) {
+		s.pipeLine.read(func(events []Event) error {
 			err := s.repo.InsertEvents(ctx, events)
 			if err != nil {
-				handleErr(fmt.Errorf("failed to insert events: %w", err))
+				return fmt.Errorf("failed to insert events: %w", err)
 			}
+			return nil
 		})
 	}()
 }
@@ -45,9 +48,14 @@ func (s *Service) Close() {
 	s.wg.Wait()
 }
 
+type eventsWithChan struct {
+	events []Event
+	ch     chan<- error
+}
+
 type pipeLine struct {
 	isClosed    *atomic.Bool
-	eventsCh    chan []Event
+	eventsCh    chan eventsWithChan
 	tickerDur   time.Duration
 	eventsLimit int
 }
@@ -58,30 +66,41 @@ func newPipeLine() *pipeLine {
 	// TODO: configure
 	return &pipeLine{
 		isClosed:    &isClosed,
-		eventsCh:    make(chan []Event, 100),
+		eventsCh:    make(chan eventsWithChan, 100),
 		tickerDur:   time.Second,
 		eventsLimit: 1000,
 	}
 }
 
-func (p *pipeLine) write(events []Event) error {
+func (p *pipeLine) write(events []Event) <-chan error {
+	ch := make(chan error, 1)
 	isClosed := p.isClosed.Load()
 	if isClosed {
-		return errors.New("pipeline closed")
+		err := errors.New("pipeline closed")
+		ch <- err
+		return ch
 	}
-	p.eventsCh <- events
-	return nil
+	p.eventsCh <- eventsWithChan{
+		events: events,
+		ch:     ch,
+	}
+	return ch
 }
 
-func (p *pipeLine) read(f func(events []Event)) {
+func (p *pipeLine) read(f func(events []Event) error) {
 	buf := make([]Event, 0, p.eventsLimit)
+	chanBuf := make([]chan<- error, 0, p.eventsLimit)
 	done := false
 	ticker := time.NewTicker(p.tickerDur)
 	defer ticker.Stop()
 	flushF := func() {
 		if len(buf) != 0 {
-			f(buf)
+			err := f(buf)
+			for _, ch := range chanBuf {
+				ch <- err
+			}
 			buf = buf[:0]
+			chanBuf = chanBuf[:0]
 		}
 	}
 	for !done {
@@ -90,7 +109,8 @@ func (p *pipeLine) read(f func(events []Event)) {
 			if ok == false {
 				done = true
 			}
-			buf = append(buf, events...)
+			buf = append(buf, events.events...)
+			chanBuf = append(chanBuf, events.ch)
 			if len(buf) > p.eventsLimit {
 				flushF()
 			}
