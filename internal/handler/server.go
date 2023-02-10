@@ -40,13 +40,12 @@ func (s *Server) createEvents(w http.ResponseWriter, req *http.Request) {
 		s.renderErr(w, req, ErrInvalidRequest(err))
 		return
 	}
+	render.Status(req, http.StatusOK)
+
 	err = s.service.CreateEvents(req.Context(), events)
 	if err != nil {
 		s.logger.Error("Failed to create events", zap.Error(err))
-		s.renderErr(w, req, ErrRender(err))
-		return
 	}
-	render.Status(req, http.StatusOK)
 }
 
 func (s *Server) eventsFromReq(req *http.Request) ([]analytics.Event, error) {
