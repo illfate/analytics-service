@@ -8,6 +8,7 @@ It has a set of predefines commands it task file for building, testing.
 There are branches with different tactics of inserting events and benchmarks using ddosify:
 
 * Wait for ClickHouse response
+```
 RESULT
 -------------------------------------
 Success Count:    5000  (100%)
@@ -23,9 +24,11 @@ Durations (Avg):
 
 Status Code (Message) :Count
   200 (OK)    :5000
-
+```
 
 * Immediately return after body read
+
+```
 RESULT
 -------------------------------------
 Success Count:    5000  (100%)
@@ -41,10 +44,10 @@ Durations (Avg):
 
 Status Code (Message) :Count
   200 (OK)    :5000
-
+```
 
 * Use pipelining without waiting for ClickHouse response
-
+```
 RESULT
 -------------------------------------
 Success Count:    5000  (100%)
@@ -60,8 +63,10 @@ Durations (Avg):
 
 Status Code (Message) :Count
   200 (OK)    :5000
+```
 
 * Use pipelining with waiting for ClickHouse response
+```
 RESULT
 -------------------------------------
 Success Count:    5000  (100%)
@@ -77,4 +82,4 @@ Durations (Avg):
 
 Status Code (Message) :Count
   200 (OK)    :5000
-
+```
